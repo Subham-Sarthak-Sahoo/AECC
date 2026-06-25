@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23C9A84C'/><text y='.9em' font-size='80' x='10'>A</text></svg>" />
+  <title>Assotech Executive Command Centre</title>
+  
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0A0C10; color: #E2E8F0; margin: 0; }
+    
+    /* Input Styling */
+    input[type="range"] { -webkit-appearance: none; appearance: none; background: #1C2330; height: 6px; border-radius: 4px; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #C9A84C; cursor: pointer; }
+    .input-field { background: #0A0C10; border: 1px solid #1C2330; border-radius: 6px; padding: 6px 12px; color: #E2E8F0; font-size: 12px; outline: none; }
+    .input-field:focus { border-color: #C9A84C; }
+    
+    /* Component Core CSS (From your Card.jsx & Sidebar.jsx) */
+    .card { background: #11151D; border: 1px solid #1F2633; border-radius: 12px; }
+    .card-accent { background: #11151D; border: 1px solid #C9A84C88; border-radius: 12px; }
+    .section-title { color: #F1F5F9; font-size: 24px; font-weight: 700; margin: 0; }
+    
+    .kpi-card { background: #11151D; border: 1px solid #1F2633; border-radius: 12px; padding: 16px; transition: all 0.2s ease; }
+    .kpi-card:hover { border-color: #2E3A4E; transform: translateY(-2px); }
+    .stat-number { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 700; color: #F1F5F9; }
+    
+    .badge { display: inline-flex; items-center; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .badge-up { background: #22C55E22; color: #22C55E; }
+    .badge-down { background: #EF444422; color: #EF4444; }
+    
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #64748B; cursor: pointer; transition: all 0.2s ease; margin-bottom: 4px; }
+    .nav-item:hover { background: #151A24; color: #E2E8F0; }
+    .nav-item.active { background: #C9A84C; color: #0A0C10; }
+    
+    .pulse-dot { width: 8px; height: 8px; background: #22C55E; border-radius: 50%; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+    
+    .table-row:hover { background-color: #151A24; }
+    .slide-in { animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .btn-primary { background-color: #C9A84C; color: #0A0C10; font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: 6px; transition: opacity 0.15s ease; cursor: pointer;}
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-ghost { background: transparent; border: 1px solid #2E3A4E; color: #94A3B8; font-weight: 500; font-size: 13px; padding: 8px 16px; border-radius: 6px; transition: all 0.15s ease; cursor: pointer;}
+    .btn-ghost:hover { background: #1C2330; color: #F1F5F9; }
+    .upload-zone { border: 2px dashed #2E3A4E; transition: all 0.2s ease; }
+    .upload-zone.drag-over, .upload-zone:hover { border-color: #C9A84C; background: #C9A84C05; }
+    
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0A0C10; }
+    ::-webkit-scrollbar-thumb { background: #1C2330; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2E3A4E; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useContext, createContext, useMemo, useRef } = React;
+    const { 
+      BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, AreaChart, Area, 
+      PieChart, Pie, ComposedChart, Line, ReferenceLine, CartesianGrid, RadarChart, 
+      Radar, PolarGrid, PolarAngleAxis 
+    } = window.Recharts;
+
+    // --- ICON ENGINE (Replaces lucide-react imports) ---
+    const ICON_PATHS = {
+      LayoutDashboard: "M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z",
+      TrendingUp: "M23 6l-9.5 9.5-5-5L1 18 M17 6h6v6",
+      TrendingDown: "M23 18l-9.5-9.5-5 5L1 6 M17 18h6v-6",
+      Users: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75",
+      Route: "M6 19h12 M6 5h12 M12 5v14 M9 9h6 M9 15h6",
+      Target: "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z M12 10V2",
+      BarChart3: "M3 3v18h18 M18 17V9 M13 17V5 M8 17v-3",
+      Lightbulb: "M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5 M9 18h6 M10 22h4",
+      Sliders: "M4 21v-7 M4 10V3 M12 21v-9 M12 8V3 M20 21v-5 M20 12V3 M1 14h6 M9 8h6 M17 16h6",
+      Upload: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M17 8l-5-5-5 5 M12 3v12",
+      ChevronRight: "M9 18l6-6-6-6",
+      Bell: "M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0",
+      Settings: "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
+      DollarSign: "M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",
+      Zap: "M13 2L3 14h9l-1 8 10-12h-9l1-8z",
+      Award: "M12 15a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM8.21 13.89L7 23l5-3 5 3-1.21-9.12",
+      CheckCircle: "M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4L12 14.01l-3-3",
+      AlertCircle: "M12 8v4 M12 16h.01 M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10z",
+      X: "M18 6L6 18 M6 6l12 12",
+      FileText: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8",
+      RefreshCw: "M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
+    };
+
+    function Icon({ name, size = 24, color = "currentColor", style, className }) {
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style} className={className}>
+          <path d={ICON_PATHS[name]} />
+        </svg>
+      );
+    }
+
+    // --- MOCK DATA (from mockData.js) ---
+    const CHANNELS = ['Meta Ads', 'Google Ads', 'Organic', 'Referral'];
+    const CAMPAIGNS = ['Assotech Celeste Launch', 'Luxury Villa Campaign', 'Year-End Offer', 'Diwali Special', 'Q1 Brand Push', 'Google Search – Noida', 'Remarketing Wave', 'Organic SEO', 'Channel Partners', 'Word of Mouth'];
+    const PROJECTS = ['Assotech Celeste', 'Assotech Park Xii', 'Assotech Business Cresterra', 'Assotech Windsor Park'];
+    const fmt = (n) => parseFloat(n.toFixed(2));
+
+    const monthlyData = [
+      { month: 'Jan 24', leads: 412, siteVisits: 187, bookings: 28, revenue: 8.4, adSpend: 1.8, channel: 'Meta Ads' },
+      { month: 'Feb 24', leads: 387, siteVisits: 201, bookings: 31, revenue: 9.3, adSpend: 1.9, channel: 'Google Ads' },
+      { month: 'Mar 24', leads: 520, siteVisits: 248, bookings: 42, revenue: 12.6, adSpend: 2.4, channel: 'Meta Ads' },
+      { month: 'Apr 24', leads: 461, siteVisits: 218, bookings: 35, revenue: 10.5, adSpend: 2.1, channel: 'Organic' },
+      { month: 'May 24', leads: 498, siteVisits: 235, bookings: 38, revenue: 11.4, adSpend: 2.2, channel: 'Google Ads' },
+      { month: 'Jun 24', leads: 543, siteVisits: 267, bookings: 44, revenue: 13.2, adSpend: 2.5, channel: 'Meta Ads' },
+      { month: 'Jul 24', leads: 476, siteVisits: 221, bookings: 36, revenue: 10.8, adSpend: 2.0, channel: 'Referral' },
+      { month: 'Aug 24', leads: 508, siteVisits: 244, bookings: 40, revenue: 12.0, adSpend: 2.3, channel: 'Google Ads' },
+      { month: 'Sep 24', leads: 582, siteVisits: 289, bookings: 51, revenue: 15.3, adSpend: 2.7, channel: 'Meta Ads' },
+      { month: 'Oct 24', leads: 641, siteVisits: 320, bookings: 58, revenue: 17.4, adSpend: 3.1, channel: 'Meta Ads' },
+      { month: 'Nov 24', leads: 714, siteVisits: 367, bookings: 67, revenue: 20.1, adSpend: 3.4, channel: 'Google Ads' },
+      { month: 'Dec 24', leads: 780, siteVisits: 410, bookings: 74, revenue: 22.2, adSpend: 3.8, channel: 'Meta Ads' },
+    ];
+
+    const channelData = [
+      { channel: 'Meta Ads', leads: 2180, siteVisits: 960, bookings: 162, revenue: 48.6, adSpend: 14.2, ctr: 3.8, cpc: 65, cpm: 248, cpl: 652, color: '#3B82F6' },
+      { channel: 'Google Ads', leads: 1640, siteVisits: 820, bookings: 148, revenue: 44.4, adSpend: 12.8, ctr: 4.2, cpc: 78, cpm: 328, cpl: 780, color: '#22C55E' },
+      { channel: 'Organic', leads: 890, siteVisits: 520, bookings: 87, revenue: 26.1, adSpend: 0, ctr: 0, cpc: 0, cpm: 0, cpl: 0, color: '#C9A84C' },
+      { channel: 'Referral', leads: 402, siteVisits: 260, bookings: 47, revenue: 14.1, adSpend: 1.2, ctr: 0, cpc: 0, cpm: 0, cpl: 298, color: '#A855F7' },
+    ];
+
+    const funnelData = [
+      { stage: 'Leads Generated', count: 5112, pct: 100, drop: 0, color: '#3B82F6' },
+      { stage: 'Qualified Leads', count: 3580, pct: 70.0, drop: 30.0, color: '#6366F1' },
+      { stage: 'Site Visits', count: 2560, pct: 50.1, drop: 19.9, color: '#8B5CF6' },
+      { stage: 'Negotiations', count: 980, pct: 19.2, drop: 30.9, color: '#A855F7' },
+      { stage: 'Bookings', count: 444, pct: 8.7, drop: 10.5, color: '#C9A84C' },
+      { stage: 'Revenue Realized', count: 312, pct: 6.1, drop: 2.6, color: '#E8C96A' },
+    ];
+
+    const campaignData = [
+      { campaign: 'Assotech Celeste Launch', channel: 'Meta Ads', leads: 842, bookings: 68, revenue: 20.4, spend: 5.6, roas: 3.64, cpl: 665, status: 'Active' },
+      { campaign: 'Google Search – Noida', channel: 'Google Ads', leads: 621, bookings: 54, revenue: 16.2, spend: 4.8, roas: 3.38, cpl: 773, status: 'Active' },
+      { campaign: 'Diwali Special', channel: 'Meta Ads', leads: 540, bookings: 48, revenue: 14.4, spend: 3.8, roas: 3.79, cpl: 704, status: 'Ended' },
+      { campaign: 'Year-End Offer', channel: 'Google Ads', leads: 480, bookings: 41, revenue: 12.3, spend: 3.2, roas: 3.84, cpl: 667, status: 'Active' },
+      { campaign: 'Remarketing Wave', channel: 'Meta Ads', leads: 398, bookings: 46, revenue: 13.8, spend: 3.0, roas: 4.60, cpl: 754, status: 'Active' },
+      { campaign: 'Luxury Villa Campaign', channel: 'Meta Ads', leads: 280, bookings: 34, revenue: 10.2, spend: 2.4, roas: 4.25, cpl: 857, status: 'Paused' },
+      { campaign: 'Channel Partners', channel: 'Referral', leads: 402, bookings: 47, revenue: 14.1, spend: 1.2, roas: 11.75, cpl: 298, status: 'Active' },
+      { campaign: 'Organic SEO', channel: 'Organic', leads: 890, bookings: 87, revenue: 26.1, spend: 0, roas: null, cpl: 0, status: 'Active' },
+      { campaign: 'Q1 Brand Push', channel: 'Google Ads', leads: 320, bookings: 28, revenue: 8.4, spend: 2.8, roas: 3.00, cpl: 875, status: 'Ended' },
+    ];
+
+    const attributionFlow = [
+      { from: 'Meta Ads', to: 'Assotech Celeste', value: 82 },
+      { from: 'Meta Ads', to: 'Park Xii', value: 48 },
+      { from: 'Meta Ads', to: 'Windsor Park', value: 32 },
+      { from: 'Google Ads', to: 'Assotech Celeste', value: 64 },
+      { from: 'Google Ads', to: 'Business Cresterra', value: 54 },
+      { from: 'Google Ads', to: 'Park Xii', value: 30 },
+      { from: 'Organic', to: 'Assotech Celeste', value: 40 },
+      { from: 'Organic', to: 'Business Cresterra', value: 28 },
+      { from: 'Organic', to: 'Windsor Park', value: 19 },
+      { from: 'Referral', to: 'Assotech Celeste', value: 28 },
+      { from: 'Referral', to: 'Windsor Park', value: 19 },
+    ];
+
+    const leakageData = [
+      { stage: 'Lead → Qualified', total: 5112, lost: 1532, lostPct: 30.0, reason: 'Unresponsive / Not Serious' },
+      { stage: 'Qualified → Site Visit', total: 3580, lost: 1020, lostPct: 28.5, reason: 'Location / Price Mismatch' },
+      { stage: 'Site Visit → Negotiation', total: 2560, lost: 1580, lostPct: 61.7, reason: 'Budget Constraint' },
+      { stage: 'Negotiation → Booking', total: 980, lost: 536, lostPct: 54.7, reason: 'Competitor Offer / Delay' },
+      { stage: 'Booking → Revenue', total: 444, lost: 132, lostPct: 29.7, reason: 'Loan Rejection / Withdrawal' },
+    ];
+
+    const kpiSummary = {
+      totalLeads: 5112, totalBookings: 444, totalRevenue: 133.2, conversionRate: 8.68,
+      totalAdSpend: 28.2, roas: 4.18, avgCAC: 63514, avgBookingValue: 3000000,
+      mom_leads: 8.5, mom_bookings: 10.4, mom_revenue: 10.4, mom_conversion: 1.8,
+    };
+
+    function generateForecast(data, months = 3) {
+      const window = 3;
+      const lastN = data.slice(-window);
+      const avgGrowth = lastN.reduce((acc, d, i) => {
+        if (i === 0) return acc;
+        return acc + (d.revenue - lastN[i - 1].revenue) / lastN[i - 1].revenue;
+      }, 0) / (window - 1);
+
+      const forecast = [];
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      let last = data[data.length - 1];
+      let lastMonthIdx = monthNames.indexOf(last.month.split(' ')[0]);
+      let lastYear = parseInt(last.month.split(' ')[1]);
+
+      for (let i = 1; i <= months; i++) {
+        const idx = (lastMonthIdx + i) % 12;
+        const yr = lastMonthIdx + i >= 12 ? lastYear + 1 : lastYear;
+        const baseRevenue = last.revenue * Math.pow(1 + avgGrowth, i);
+        forecast.push({
+          month: `${monthNames[idx]} ${yr}`, revenue: fmt(baseRevenue),
+          leads: Math.round(last.leads * Math.pow(1 + avgGrowth * 0.8, i)),
+          bookings: Math.round(last.bookings * Math.pow(1 + avgGrowth * 0.85, i)),
+          forecast: true,
+        });
+      }
+      return forecast;
+    }
+
+    const allMonthlyData = [...monthlyData, ...generateForecast(monthlyData)];
+
+
+    // --- CONTEXT ENGINE (from DashboardContext.jsx) ---
+    const DashboardContext = createContext(null);
+
+    function DashboardProvider({ children }) {
+      const [activeModule, setActiveModule] = useState('overview');
+      const [filterChannel, setFilterChannel] = useState('All');
+      const [filterDateRange, setFilterDateRange] = useState('All Time');
+      const [uploadedData, setUploadedData] = useState(null);
+      const [scenarioBudget, setScenarioBudget] = useState(28.2);
+      const [scenarioConvRate, setScenarioConvRate] = useState(8.68);
+      const [scenarioLeadVol, setScenarioLeadVol] = useState(5112);
+      const [budgetAllocation, setBudgetAllocation] = useState({
+        'Meta Ads': 40, 'Google Ads': 35, 'Organic': 15, 'Referral': 10,
+      });
+
+      const data = useMemo(() => {
+        const base = uploadedData || { monthly: monthlyData, channels: channelData, campaigns: campaignData };
+        let monthly = base.monthly || monthlyData;
+        let channels = base.channels || channelData;
+        let campaigns = base.campaigns || campaignData;
+
+        if (filterChannel !== 'All') {
+          channels = channels.filter(c => c.channel === filterChannel);
+          campaigns = campaigns.filter(c => c.channel === filterChannel);
+        }
+
+        return { monthly, channels, campaigns, funnel: funnelData, leakage: leakageData, allMonthly: allMonthlyData };
+      }, [uploadedData, filterChannel, filterDateRange]);
+
+      const kpis = useMemo(() => {
+        const channels = data.channels;
+        const totalLeads = channels.reduce((s, c) => s + c.leads, 0);
+        const totalBookings = channels.reduce((s, c) => s + c.bookings, 0);
+        const totalRevenue = channels.reduce((s, c) => s + c.revenue, 0);
+        const totalSpend = channels.reduce((s, c) => s + c.adSpend, 0);
+        return {
+          totalLeads, totalBookings,
+          totalRevenue: parseFloat(totalRevenue.toFixed(1)),
+          conversionRate: parseFloat(((totalBookings / (totalLeads || 1)) * 100).toFixed(2)),
+          totalAdSpend: parseFloat(totalSpend.toFixed(1)),
+          roas: totalSpend > 0 ? parseFloat((totalRevenue / totalSpend).toFixed(2)) : 0,
+          avgCAC: totalBookings > 0 ? Math.round((totalSpend * 1e7) / totalBookings) : 0,
+          mom_leads: kpiSummary.mom_leads, mom_bookings: kpiSummary.mom_bookings,
+          mom_revenue: kpiSummary.mom_revenue, mom_conversion: kpiSummary.mom_conversion,
+        };
+      }, [data.channels]);
+
+      const scenarioKPIs = useMemo(() => {
+        const projectedBookings = Math.round(scenarioLeadVol * scenarioConvRate / 100);
+        const avgRevenuePerBooking = 3.0; // crore
+        const projectedRevenue = parseFloat((projectedBookings * avgRevenuePerBooking).toFixed(1));
+        const projectedROAS = scenarioBudget > 0 ? parseFloat((projectedRevenue / scenarioBudget).toFixed(2)) : 0;
+        return { projectedLeads: scenarioLeadVol, projectedBookings, projectedRevenue, projectedROAS };
+      }, [scenarioBudget, scenarioConvRate, scenarioLeadVol]);
+
+      return (
+        <DashboardContext.Provider value={{
+          activeModule, setActiveModule, filterChannel, setFilterChannel,
+          filterDateRange, setFilterDateRange, uploadedData, setUploadedData,
+          data, kpis, scenarioBudget, setScenarioBudget, scenarioConvRate, setScenarioConvRate,
+          scenarioLeadVol, setScenarioLeadVol, scenarioKPIs, budgetAllocation, setBudgetAllocation,
+        }}>
+          {children}
+        </DashboardContext.Provider>
+      );
+    }
+
+    const useDashboard = () => useContext(DashboardContext);
+
+
+    // --- UI COMPONENTS (from Card.jsx) ---
+    function Card({ children, className = '', style = {}, accent = false }) {
+      return <div className={`${accent ? 'card-accent' : 'card'} ${className}`} style={{ padding: 20, ...style }}>{children}</div>;
+    }
+
+    function SectionTitle({ children, sub }) {
+      return (
+        <div style={{ marginBottom: 20 }}>
+          <h2 className="section-title">{children}</h2>
+          {sub && <p style={{ color: '#475569', fontSize: 12, marginTop: 4 }}>{sub}</p>}
+        </div>
+      );
+    }
+
+    function KPICard({ label, value, delta, sub, icon, format = 'auto', color = '#C9A84C' }) {
+      const isUp = delta >= 0;
+      const fmt = (v) => {
+        if (format === 'currency') return `₹${v} Cr`;
+        if (format === 'pct') return `${v}%`;
+        if (format === 'inr') return `₹${v.toLocaleString('en-IN')}`;
+        if (typeof v === 'number' && v > 9999) return v.toLocaleString('en-IN');
+        return v;
+      };
+      return (
+        <div className="kpi-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+            <span style={{ color: '#475569', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em' }}>{label}</span>
+            {icon && <Icon name={icon} size={16} color={color} />}
+          </div>
+          <div className="stat-number" style={{ marginBottom: 8 }}>{fmt(value)}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {delta !== undefined && (
+              <span className={`badge ${isUp ? 'badge-up' : 'badge-down'}`}>
+                {isUp ? '▲' : '▼'} {Math.abs(delta)}% MoM
+              </span>
+            )}
+            {sub && <span style={{ color: '#475569', fontSize: 11 }}>{sub}</span>}
+          </div>
+        </div>
+      );
+    }
+
+    function Tag({ children, color = '#C9A84C' }) {
+      return (
+        <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, letterSpacing: '0.03em', background: `${color}22`, color }}>
+          {children}
+        </span>
+      );
+    }
+
+
+    // --- LAYOUT ENGINE (Sidebar & TopBar) ---
+    const NAV_ITEMS = [
+      { id: 'overview', label: 'Executive Overview', icon: 'LayoutDashboard' },
+      { id: 'marketing', label: 'Marketing Intelligence', icon: 'TrendingUp' },
+      { id: 'funnel', label: 'Sales Funnel', icon: 'Route' },
+      { id: 'attribution', label: 'Attribution', icon: 'Target' },
+      { id: 'revenue', label: 'Revenue & Forecast', icon: 'BarChart3' },
+      { id: 'leakage', label: 'Funnel Leakage', icon: 'Users' },
+      { id: 'budget', label: 'Budget Optimizer', icon: 'Sliders' },
+      { id: 'whatif', label: 'What-If Engine', icon: 'Lightbulb' },
+      { id: 'upload', label: 'Data Upload', icon: 'Upload' },
+    ];
+
+    function Sidebar() {
+      const { activeModule, setActiveModule } = useDashboard();
+      return (
+        <aside style={{ width: 220, minWidth: 220, background: '#0A0C10', borderRight: '1px solid #1C2330', height: '100vh', position: 'sticky', top: 0, display: 'flex', flexDirection: 'column', zIndex: 10 }}>
+          <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid #1C2330' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+              <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #C9A84C, #8B6E2A)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ color: '#0A0C10', fontWeight: 700, fontSize: 14 }}>A</span>
+              </div>
+              <div>
+                <div style={{ fontFamily: "'Playfair Display', serif", color: '#C9A84C', fontSize: 14, fontWeight: 600, lineHeight: 1.2 }}>ASSOTECH</div>
+                <div style={{ color: '#475569', fontSize: 9, letterSpacing: '0.15em', fontWeight: 500 }}>COMMAND CENTRE</div>
+              </div>
+            </div>
+          </div>
+          <nav style={{ flex: 1, padding: '12px 10px', overflowY: 'auto' }}>
+            <div style={{ color: '#334155', fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', padding: '8px 6px 4px', marginBottom: 4 }}>MODULES</div>
+            {NAV_ITEMS.map(({ id, label, icon }) => (
+              <div key={id} className={`nav-item ${activeModule === id ? 'active' : ''}`} onClick={() => setActiveModule(id)}>
+                <Icon name={icon} size={15} />
+                <span style={{ flex: 1 }}>{label}</span>
+                {activeModule === id && <Icon name="ChevronRight" size={12} />}
+              </div>
+            ))}
+          </nav>
+          <div style={{ padding: '12px 16px', borderTop: '1px solid #1C2330' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div className="pulse-dot" />
+              <span style={{ color: '#475569', fontSize: 11 }}>Live • Updated now</span>
+            </div>
+            <div style={{ color: '#334155', fontSize: 10, marginTop: 6 }}>FY 2024 · Real Estate</div>
+          </div>
+        </aside>
+      );
+    }
+
+    function KPIChip({ label, value, delta, format = 'number' }) {
+      const isUp = delta >= 0;
+      const fmt = (v) => {
+        if (format === 'currency') return `₹${v}Cr`;
+        if (format === 'pct') return `${v}%`;
+        return v.toLocaleString('en-IN');
+      };
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', padding: '0 18px', borderRight: '1px solid #1C2330' }}>
+          <span style={{ color: '#475569', fontSize: 10, fontWeight: 500, letterSpacing: '0.05em', marginBottom: 2 }}>{label}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 16, fontWeight: 500, color: '#F1F5F9' }}>{fmt(value)}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 10, fontWeight: 600, color: isUp ? '#22C55E' : '#EF4444' }}>
+              {isUp ? <Icon name="TrendingUp" size={10} /> : <Icon name="TrendingDown" size={10} />}
+              {Math.abs(delta)}%
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    function TopBar() {
+      const { kpis, filterChannel, setFilterChannel, filterDateRange, setFilterDateRange } = useDashboard();
+      return (
+        <header style={{ background: '#0A0C10', borderBottom: '1px solid #1C2330', position: 'sticky', top: 0, zIndex: 9 }}>
+          <div style={{ display: 'flex', alignItems: 'center', padding: '10px 24px', gap: 0, overflowX: 'auto' }}>
+            <KPIChip label="TOTAL LEADS" value={kpis.totalLeads} delta={kpis.mom_leads} />
+            <KPIChip label="BOOKINGS" value={kpis.totalBookings} delta={kpis.mom_bookings} />
+            <KPIChip label="REVENUE" value={kpis.totalRevenue} delta={kpis.mom_revenue} format="currency" />
+            <KPIChip label="CONVERSION" value={kpis.conversionRate} delta={kpis.mom_conversion} format="pct" />
+            <KPIChip label="AD SPEND" value={kpis.totalAdSpend} delta={-2.1} format="currency" />
+            <KPIChip label="ROAS" value={kpis.roas} delta={3.2} />
+            <div style={{ flex: 1 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 18 }}>
+              <select className="input-field" value={filterChannel} onChange={e => setFilterChannel(e.target.value)}>
+                <option>All</option><option>Meta Ads</option><option>Google Ads</option><option>Organic</option><option>Referral</option>
+              </select>
+              <select className="input-field" value={filterDateRange} onChange={e => setFilterDateRange(e.target.value)}>
+                <option>All Time</option><option>Last 3 Months</option><option>Last 6 Months</option><option>Q4 FY24</option>
+              </select>
+              <button style={{ background: 'transparent', border: 'none', color: '#475569', cursor: 'pointer', padding: 6 }}><Icon name="Bell" size={16} /></button>
+              <button style={{ background: 'transparent', border: 'none', color: '#475569', cursor: 'pointer', padding: 6 }}><Icon name="Settings" size={16} /></button>
+            </div>
+          </div>
+        </header>
+      );
+    }
+
+    // --- MODULES ---
+    const CHANNEL_COLORS = { 'Meta Ads': '#3B82F6', 'Google Ads': '#22C55E', 'Organic': '#C9A84C', 'Referral': '#A855F7' };
+    const CustomTooltip = ({ active, payload, label }) => {
+      if (!active || !payload?.length) return null;
+      return (
+        <div style={{ background: '#151A22', border: '1px solid #2E3A4E', borderRadius: 8, padding: '10px 14px' }}>
+          <p style={{ color: '#94A3B8', fontSize: 11, marginBottom: 6 }}>{label}</p>
+          {payload.map((p, i) => (
+            <p key={i} style={{ color: p.color || '#C9A84C', fontSize: 13, fontWeight: 600, margin: '2px 0' }}>
+              {p.name}: {typeof p.value === 'number' && p.value > 100 ? p.value.toLocaleString('en-IN') : p.value}
+            </p>
+          ))}
+        </div>
+      );
+    };
+
+    function Overview() {
+      const { kpis, data } = useDashboard();
+      const pieData = data.channels.map(c => ({ name: c.channel, value: c.leads, color: CHANNEL_COLORS[c.channel] }));
+      return (
+        <div className="slide-in" style={{ padding: '24px' }}>
+          <SectionTitle sub="Real-time business intelligence · FY 2024">Executive Command Overview</SectionTitle>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 14, marginBottom: 24 }}>
+            <KPICard label="TOTAL LEADS" value={kpis.totalLeads} delta={kpis.mom_leads} icon="Users" />
+            <KPICard label="BOOKINGS" value={kpis.totalBookings} delta={kpis.mom_bookings} icon="Award" />
+            <KPICard label="REVENUE" value={kpis.totalRevenue} delta={kpis.mom_revenue} icon="DollarSign" format="currency" />
+            <KPICard label="CONVERSION RATE" value={kpis.conversionRate} delta={kpis.mom_conversion} icon="Target" format="pct" />
+            <KPICard label="AD SPEND" value={kpis.totalAdSpend} delta={-2.1} icon="Zap" color="#EF4444" format="currency" />
+            <KPICard label="ROAS" value={`${kpis.roas}x`} delta={3.2} icon="TrendingUp" />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 16 }}>
+            <Card>
+              <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>Monthly Lead & Booking Trend</div>
+              <ResponsiveContainer width="100%" height={220}>
+                <AreaChart data={data.monthly}>
+                  <defs>
+                    <linearGradient id="glLeads" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/><stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/></linearGradient>
+                    <linearGradient id="glBookings" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#C9A84C" stopOpacity={0.3}/><stop offset="95%" stopColor="#C9A84C" stopOpacity={0}/></linearGradient>
+                  </defs>
+                  <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area type="monotone" dataKey="leads" name="Leads" stroke="#3B82F6" fill="url(#glLeads)" strokeWidth={2} dot={false} />
+                  <Area type="monotone" dataKey="bookings" name="Bookings" stroke="#C9A84C" fill="url(#glBookings)" strokeWidth={2} dot={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </Card>
+            <Card>
+              <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>Lead Source Mix</div>
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value">
+                    {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+                {pieData.map(d => (
+                  <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#64748B' }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: d.color }} />{d.name}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+          <Card>
+            <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>Revenue by Channel (₹ Crore)</div>
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart data={data.channels} layout="vertical" barSize={18}>
+                <XAxis type="number" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="channel" tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} width={90} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="revenue" name="Revenue (₹Cr)" radius={[0, 4, 4, 0]}>
+                  {data.channels.map((entry, i) => <Cell key={i} fill={CHANNEL_COLORS[entry.channel] || '#C9A84C'} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        </div>
+      );
+    }
+
+    function Marketing() {
+      const { data } = useDashboard();
+      const statusColor = { Active: '#22C55E', Ended: '#475569', Paused: '#EAB308' };
+      const bestChannel = [...data.channels].sort((a, b) => b.revenue - a.revenue)[0];
+      const radarData = data.channels.map(c => ({
+        channel: c.channel.replace(' Ads', ''), Leads: Math.round((c.leads / 2200) * 100), Bookings: Math.round((c.bookings / 170) * 100), Revenue: Math.round((c.revenue / 50) * 100), ROAS: c.adSpend > 0 ? Math.round((c.revenue / c.adSpend) * 20) : 50,
+      }));
+      return (
+        <div className="slide-in" style={{ padding: 24 }}>
+          <SectionTitle sub="Campaign performance · Source analytics · Media metrics">Marketing Intelligence</SectionTitle>
+          <div style={{ background: 'linear-gradient(135deg, #C9A84C11, #C9A84C05)', border: '1px solid #C9A84C33', borderRadius: 12, padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ width: 40, height: 40, background: '#C9A84C22', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🏆</div>
+            <div>
+              <div style={{ color: '#C9A84C', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em' }}>TOP PERFORMING CHANNEL</div>
+              <div style={{ color: '#F1F5F9', fontSize: 16, fontWeight: 600, marginTop: 2 }}>{bestChannel.channel}</div>
+            </div>
+            <div style={{ flex: 1 }} />
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ color: '#475569', fontSize: 11 }}>Revenue</div>
+              <div style={{ color: '#C9A84C', fontFamily: 'JetBrains Mono, monospace', fontSize: 18, fontWeight: 600 }}>₹{bestChannel.revenue} Cr</div>
+            </div>
+            <div style={{ textAlign: 'right', marginLeft: 24 }}>
+              <div style={{ color: '#475569', fontSize: 11 }}>Bookings</div>
+              <div style={{ color: '#F1F5F9', fontFamily: 'JetBrains Mono, monospace', fontSize: 18, fontWeight: 600 }}>{bestChannel.bookings}</div>
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+            <Card>
+              <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>Leads by Channel</div>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={data.channels} barSize={32}>
+                  <XAxis dataKey="channel" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="leads" name="Leads" radius={[4, 4, 0, 0]}>
+                    {data.channels.map((entry, i) => <Cell key={i} fill={CHANNEL_COLORS[entry.channel]} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+            <Card>
+              <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>Channel Performance Index</div>
+              <ResponsiveContainer width="100%" height={200}>
+                <RadarChart data={radarData}>
+                  <PolarGrid stroke="#1C2330" />
+                  <PolarAngleAxis dataKey="channel" tick={{ fontSize: 10, fill: '#475569' }} />
+                  <Radar name="Leads" dataKey="Leads" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.1} />
+                  <Radar name="Revenue" dataKey="Revenue" stroke="#C9A84C" fill="#C9A84C" fillOpacity={0.1} />
+                  <Tooltip content={<CustomTooltip />} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </Card>
+          </div>
+          <Card style={{ marginBottom: 16 }}>
+            <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>Source-Wise Metrics</div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #1C2330' }}>
+                    {['Channel', 'Leads', 'Site Visits', 'Bookings', 'Revenue', 'Ad Spend', 'ROAS', 'CTR %', 'CPL (₹)'].map(h => (
+                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: '#475569', fontWeight: 600, fontSize: 10 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.channels.map((row, i) => (
+                    <tr key={i} className="table-row" style={{ borderBottom: '1px solid #0F1218' }}>
+                      <td style={{ padding: '10px 12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: CHANNEL_COLORS[row.channel] }} />
+                          <span style={{ color: '#E2E8F0', fontWeight: 500 }}>{row.channel}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8' }}>{row.leads.toLocaleString('en-IN')}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8' }}>{row.siteVisits.toLocaleString('en-IN')}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8' }}>{row.bookings}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'JetBrains Mono, monospace', color: '#C9A84C', fontWeight: 600 }}>₹{row.revenue} Cr</td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8' }}>{row.adSpend > 0 ? `₹${row.adSpend} Cr` : '—'}</td>
+                      <td style={{ padding: '10px 12px' }}>
+                        {row.adSpend > 0 ? <Tag color={row.revenue / row.adSpend > 4 ? '#22C55E' : '#EAB308'}>{(row.revenue / row.adSpend).toFixed(2)}x</Tag> : <span style={{ color: '#334155' }}>N/A</span>}
+                      </td>
+                      <td style={{ padding: '10px 12px', color: '#94A3B8' }}>{row.ctr > 0 ? `${row.ctr}%` : '—'}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8' }}>{row.cpl > 0 ? `₹${row.cpl}` : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+          <Card>
+            <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>Campaign Performance</div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #1C2330' }}>
+                    {['Campaign', 'Channel', 'Leads', 'Bookings', 'Revenue', 'Spend', 'ROAS', 'CPL', 'Status'].map(h => (
+                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: '#475569', fontWeight: 600, fontSize: 10 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.campaigns.map((row, i) => (
+                    <tr key={i} className="table-row" style={{ borderBottom: '1px solid #0F1218' }}>
+                      <td style={{ padding: '10px 12px', color: '#E2E8F0', fontWeight: 500 }}>{row.campaign}</td>
+                      <td style={{ padding: '10px 12px', fontSize: 11, color: CHANNEL_COLORS[row.channel], fontWeight: 500 }}>{row.channel}</td>
+                      <td style={{ padding: '10px 12px', color: '#94A3B8', fontFamily: 'JetBrains Mono, monospace' }}>{row.leads}</td>
+                      <td style={{ padding: '10px 12px', color: '#94A3B8', fontFamily: 'JetBrains Mono, monospace' }}>{row.bookings}</td>
+                      <td style={{ padding: '10px 12px', color: '#C9A84C', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>₹{row.revenue} Cr</td>
+                      <td style={{ padding: '10px 12px', color: '#94A3B8', fontFamily: 'JetBrains Mono, monospace' }}>{row.spend > 0 ? `₹${row.spend} Cr` : '—'}</td>
+                      <td style={{ padding: '10px 12px' }}>{row.roas ? <Tag color={row.roas > 4 ? '#22C55E' : '#EAB308'}>{row.roas}x</Tag> : <span style={{ color: '#334155' }}>—</span>}</td>
+                      <td style={{ padding: '10px 12px', color: '#94A3B8', fontFamily: 'JetBrains Mono, monospace' }}>{row.cpl > 0 ? `₹${row.cpl}` : '—'}</td>
+                      <td style={{ padding: '10px 12px' }}><span className="badge" style={{ background: `${statusColor[row.status]}22`, color: statusColor[row.status] }}>{row.status}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      );
+    }
+
+    function Funnel() {
+      const { data } = useDashboard();
+      return (
+        <div className="slide-in" style={{ padding: 24 }}>
+          <SectionTitle sub="Lead-to-revenue conversion pipeline · Stage-wise analytics">Sales Funnel Analytics</SectionTitle>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+            <Card>
+              <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 20 }}>Conversion Pipeline</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {data.funnel.map((stage, i) => (
+                  <div key={i}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5, alignItems: 'center' }}>
+                      <span style={{ color: '#94A3B8', fontSize: 12, fontWeight: 500 }}>{stage.stage}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#F1F5F9', fontSize: 13, fontWeight: 600 }}>{stage.count.toLocaleString('en-IN')}</span>
+                        <span style={{ fontFamily: 'JetBrains Mono, monospace', color: stage.color, fontSize: 12, width: 42, textAlign: 'right' }}>{stage.pct}%</span>
+                      </div>
+                    </div>
+                    <div style={{ background: '#1C2330', borderRadius: 4, height: 10, overflow: 'hidden' }}>
+                      <div style={{ width: `${stage.pct}%`, height: '100%', background: `linear-gradient(90deg, ${stage.color}cc, ${stage.color})`, borderRadius: 4 }} />
+                    </div>
+                    {i < data.funnel.length - 1 && stage.drop > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}>
+                        <span style={{ color: '#EF444488', fontSize: 10 }}>▼ {stage.drop}% dropped</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+            <Card>
+              <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>Stage Volumes</div>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={data.funnel} barSize={32}>
+                  <XAxis dataKey="stage" tick={{ fontSize: 9, fill: '#475569' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="count" name="Count" radius={[4, 4, 0, 0]}>
+                    {data.funnel.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12 }}>
+            {data.funnel.map((stage, i) => (
+              <div key={i} className="kpi-card text-center" style={{ borderTop: `3px solid ${stage.color}` }}>
+                <div style={{ color: '#475569', fontSize: 10, marginBottom: 6, fontWeight: 600 }}>{stage.stage.toUpperCase()}</div>
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 20, fontWeight: 700, color: '#F1F5F9', marginBottom: 4 }}>{stage.count.toLocaleString('en-IN')}</div>
+                <div style={{ color: stage.color, fontSize: 12, fontWeight: 600 }}>{stage.pct}%</div>
+                {stage.drop > 0 && <div style={{ marginTop: 6, padding: '2px 6px', background: '#EF444411', borderRadius: 4, color: '#EF4444', fontSize: 10, fontWeight: 600 }}>-{stage.drop}% drop</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function Attribution() {
+      const { data } = useDashboard();
+      const sources = ['Meta Ads', 'Google Ads', 'Organic', 'Referral'];
+      const projects = ['Assotech Celeste', 'Park Xii', 'Business Cresterra', 'Windsor Park'];
+      const PROJECT_COLORS = { 'Assotech Celeste': '#C9A84C', 'Park Xii': '#3B82F6', 'Business Cresterra': '#22C55E', 'Windsor Park': '#A855F7' };
+      const matrix = sources.map(src => {
+        const row = { source: src };
+        projects.forEach(proj => {
+          const flow = attributionFlow.find(f => f.from === src && f.to === proj);
+          row[proj] = flow ? flow.value : 0;
+        });
+        row.total = projects.reduce((s, p) => s + row[p], 0);
+        return row;
+      });
+      const topSource = data.channels.reduce((best, c) => c.bookings / c.leads > best.bookings / best.leads ? c : best);
+
+      return (
+        <div className="slide-in" style={{ padding: 24 }}>
+          <SectionTitle sub="Source attribution · Channel contribution · Journey mapping">Customer Attribution Analysis</SectionTitle>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
+            {data.channels.map(c => {
+              const convRate = ((c.bookings / c.leads) * 100).toFixed(1);
+              const isTop = c.channel === topSource.channel;
+              return (
+                <div key={c.channel} className="kpi-card" style={{ borderTop: `2px solid ${isTop ? '#C9A84C' : CHANNEL_COLORS[c.channel]}`, position: 'relative' }}>
+                  {isTop && <div style={{ position: 'absolute', top: 8, right: 8, background: '#C9A84C22', color: '#C9A84C', fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4 }}>TOP</div>}
+                  <div style={{ color: CHANNEL_COLORS[c.channel], fontSize: 12, fontWeight: 600, marginBottom: 6 }}>{c.channel}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}><span style={{ color: '#475569', fontSize: 11 }}>Leads</span><span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8', fontSize: 11 }}>{c.leads.toLocaleString('en-IN')}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}><span style={{ color: '#475569', fontSize: 11 }}>Bookings</span><span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8', fontSize: 11 }}>{c.bookings}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#475569', fontSize: 11 }}>Conv. Rate</span><span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#C9A84C', fontSize: 13, fontWeight: 700 }}>{convRate}%</span></div>
+                </div>
+              );
+            })}
+          </div>
+          <Card>
+            <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>Source × Project Attribution Matrix (Bookings)</div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #1C2330' }}>
+                  <th style={{ padding: '8px 12px', textAlign: 'left', color: '#475569', fontSize: 10, fontWeight: 700 }}>SOURCE</th>
+                  {projects.map(p => <th key={p} style={{ padding: '8px 12px', textAlign: 'right', color: '#475569', fontSize: 10, fontWeight: 700 }}>{p}</th>)}
+                  <th style={{ padding: '8px 12px', textAlign: 'right', color: '#C9A84C', fontSize: 10, fontWeight: 700 }}>TOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                {matrix.map((row, i) => (
+                  <tr key={i} className="table-row" style={{ borderBottom: '1px solid #0F1218' }}>
+                    <td style={{ padding: '10px 12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: CHANNEL_COLORS[row.source] }} />
+                        <span style={{ color: '#E2E8F0', fontWeight: 500 }}>{row.source}</span>
+                      </div>
+                    </td>
+                    {projects.map(p => <td key={p} style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', color: row[p] > 10 ? '#C9A84C' : '#64748B', fontWeight: row[p] > 10 ? 700 : 400 }}>{row[p] || '—'}</td>)}
+                    <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', color: '#F1F5F9', fontWeight: 700 }}>{row.total}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        </div>
+      );
+    }
+
+    function Revenue() {
+      const { data } = useDashboard();
+      const chartData = data.allMonthly.map(d => ({
+        ...d, actualRevenue: d.forecast ? null : d.revenue, forecastRevenue: d.forecast ? d.revenue : null, blendRevenue: d.revenue,
+      }));
+      const actual = data.allMonthly.filter(d => !d.forecast);
+      const forecast = data.allMonthly.filter(d => d.forecast);
+      const totalActual = actual.reduce((s, d) => s + d.revenue, 0).toFixed(1);
+      const totalForecast = forecast.reduce((s, d) => s + d.revenue, 0).toFixed(1);
+      const avgMonthly = (actual.reduce((s, d) => s + d.revenue, 0) / actual.length).toFixed(1);
+      const momGrowth = (((actual[actual.length - 1].revenue - actual[actual.length - 2].revenue) / actual[actual.length - 2].revenue) * 100).toFixed(1);
+
+      const withMA = chartData.map((d, i, arr) => {
+        if (i < 2) return { ...d, ma3: null };
+        const slice = arr.slice(i - 2, i + 1);
+        const avg = slice.reduce((s, x) => s + (x.blendRevenue || 0), 0) / 3;
+        return { ...d, ma3: parseFloat(avg.toFixed(2)) };
+      });
+
+      return (
+        <div className="slide-in" style={{ padding: 24 }}>
+          <SectionTitle sub="Monthly revenue trends · Moving average · 3-month forward projection">Revenue & Forecasting</SectionTitle>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
+            <KPICard label="FY24 ACTUAL REVENUE" value={totalActual} format="currency" sub="Jan–Dec 2024" color="#C9A84C" />
+            <KPICard label="3-MONTH FORECAST" value={totalForecast} format="currency" sub="Jan–Mar 2025" color="#3B82F6" />
+            <KPICard label="AVG MONTHLY REVENUE" value={avgMonthly} format="currency" sub="FY24 average" color="#22C55E" />
+            <KPICard label="MOM GROWTH (DEC)" value={momGrowth} format="pct" sub="vs Nov 2024" color={momGrowth > 0 ? '#22C55E' : '#EF4444'} />
+          </div>
+          <Card style={{ marginBottom: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600 }}>Revenue Trend + 3-Month Forecast</div>
+              <div style={{ display: 'flex', gap: 16, fontSize: 11 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><div style={{ width: 24, height: 2, background: '#C9A84C' }} /><span style={{ color: '#64748B' }}>Actual</span></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><div style={{ width: 24, height: 2, background: '#3B82F6', borderTop: '2px dashed #3B82F6' }} /><span style={{ color: '#64748B' }}>Forecast</span></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><div style={{ width: 24, height: 2, background: '#22C55E44' }} /><span style={{ color: '#64748B' }}>3-MA</span></div>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={280}>
+              <ComposedChart data={withMA}>
+                <defs>
+                  <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#C9A84C" stopOpacity={0.25}/><stop offset="95%" stopColor="#C9A84C" stopOpacity={0}/></linearGradient>
+                  <linearGradient id="fcastGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3B82F6" stopOpacity={0.2}/><stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/></linearGradient>
+                </defs>
+                <CartesianGrid stroke="#1C2330" strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} tickFormatter={v => `₹${v}`} />
+                <Tooltip content={<CustomTooltip />} />
+                <ReferenceLine x="Dec 24" stroke="#2E3A4E" strokeDasharray="4 4" label={{ value: 'Forecast →', fill: '#475569', fontSize: 10 }} />
+                <Area type="monotone" dataKey="actualRevenue" name="Actual Revenue" stroke="#C9A84C" fill="url(#revGrad)" strokeWidth={2.5} connectNulls={false} />
+                <Area type="monotone" dataKey="forecastRevenue" name="Forecast Revenue" stroke="#3B82F6" fill="url(#fcastGrad)" strokeWidth={2} strokeDasharray="6 3" dot={{ fill: '#3B82F6', r: 4 }} connectNulls={false} />
+                <Line type="monotone" dataKey="ma3" name="3-Month MA" stroke="#22C55E" strokeWidth={1.5} dot={false} strokeDasharray="4 2" connectNulls />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </Card>
+          <Card>
+            <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>Monthly Revenue Breakdown</div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #1C2330' }}>
+                    {['Month', 'Revenue', 'Leads', 'Bookings', 'MoM Δ', 'Type'].map(h => <th key={h} style={{ padding: '8px 14px', textAlign: 'left', color: '#475569', fontSize: 10, fontWeight: 700 }}>{h}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.allMonthly.map((row, i) => {
+                    const prev = data.allMonthly[i - 1];
+                    const delta = prev ? (((row.revenue - prev.revenue) / prev.revenue) * 100).toFixed(1) : null;
+                    return (
+                      <tr key={i} className="table-row" style={{ borderBottom: '1px solid #0F1218', opacity: row.forecast ? 0.75 : 1 }}>
+                        <td style={{ padding: '9px 14px', color: row.forecast ? '#3B82F6' : '#E2E8F0', fontWeight: 500 }}>{row.month}</td>
+                        <td style={{ padding: '9px 14px', fontFamily: 'JetBrains Mono, monospace', color: '#C9A84C', fontWeight: 600 }}>₹{row.revenue} Cr</td>
+                        <td style={{ padding: '9px 14px', fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8' }}>{row.leads?.toLocaleString('en-IN')}</td>
+                        <td style={{ padding: '9px 14px', fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8' }}>{row.bookings}</td>
+                        <td style={{ padding: '9px 14px' }}>{delta !== null ? <span style={{ color: parseFloat(delta) >= 0 ? '#22C55E' : '#EF4444', fontSize: 11, fontWeight: 600 }}>{parseFloat(delta) >= 0 ? '▲' : '▼'} {Math.abs(delta)}%</span> : '—'}</td>
+                        <td style={{ padding: '9px 14px' }}><span className="badge" style={{ background: row.forecast ? '#3B82F622' : '#22C55E22', color: row.forecast ? '#3B82F6' : '#22C55E' }}>{row.forecast ? 'Forecast' : 'Actual'}</span></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      );
+    }
+
+    function Leakage() {
+      const { data } = useDashboard();
+      const worstStage = [...data.leakage].sort((a, b) => b.lostPct - a.lostPct)[0];
+      const SEVERITY = (pct) => {
+        if (pct >= 55) return { color: '#EF4444', label: 'CRITICAL', bg: '#EF444411' };
+        if (pct >= 35) return { color: '#EAB308', label: 'HIGH', bg: '#EAB30811' };
+        return { color: '#22C55E', label: 'MODERATE', bg: '#22C55E11' };
+      };
+      return (
+        <div className="slide-in" style={{ padding: 24 }}>
+          <SectionTitle sub="Identify bottlenecks · Stage-wise attrition · Recovery opportunities">Funnel Leakage Analysis</SectionTitle>
+          <div style={{ background: '#EF444411', border: '1px solid #EF444433', borderRadius: 10, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ fontSize: 24 }}>⚠️</div>
+            <div>
+              <div style={{ color: '#EF4444', fontSize: 12, fontWeight: 700, letterSpacing: '0.06em' }}>CRITICAL BOTTLENECK DETECTED</div>
+              <div style={{ color: '#94A3B8', fontSize: 12, marginTop: 3 }}>
+                <strong style={{ color: '#F1F5F9' }}>{worstStage.stage}</strong> has the highest drop-off at <strong style={{ color: '#EF4444' }}>{worstStage.lostPct}%</strong> — primary reason: <em style={{ color: '#94A3B8' }}>{worstStage.reason}</em>.
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14, marginBottom: 20 }}>
+            {data.leakage.map((stage, i) => {
+              const sev = SEVERITY(stage.lostPct);
+              return (
+                <div key={i} className="kpi-card" style={{ borderLeft: `3px solid ${sev.color}` }}>
+                  <div style={{ color: '#64748B', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', marginBottom: 8 }}>{stage.stage.toUpperCase()}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10 }}>
+                    <div>
+                      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 22, fontWeight: 700, color: sev.color }}>{stage.lostPct}%</div>
+                      <div style={{ color: '#475569', fontSize: 11 }}>drop-off rate</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 16, color: '#EF4444', fontWeight: 600 }}>{stage.lost.toLocaleString('en-IN')}</div>
+                      <div style={{ color: '#475569', fontSize: 11 }}>lost of {stage.total.toLocaleString('en-IN')}</div>
+                    </div>
+                  </div>
+                  <div style={{ background: '#1C2330', borderRadius: 4, height: 6, marginBottom: 8 }}>
+                    <div style={{ width: `${stage.lostPct}%`, height: '100%', background: sev.color, borderRadius: 4 }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, color: '#475569' }}>{stage.reason}</span>
+                    <span className="badge" style={{ background: sev.bg, color: sev.color }}>{sev.label}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 16 }}>
+            <Card>
+              <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>Drop-off % by Stage</div>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={data.leakage} barSize={28}>
+                  <XAxis dataKey="stage" tick={{ fontSize: 9, fill: '#475569' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} tickFormatter={v => `${v}%`} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="lostPct" name="Drop-off %" radius={[4, 4, 0, 0]}>
+                    {data.leakage.map((entry, i) => <Cell key={i} fill={SEVERITY(entry.lostPct).color} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+            <Card>
+              <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>Volume Lost per Stage</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {data.leakage.map((stage, i) => {
+                  const sev = SEVERITY(stage.lostPct);
+                  const barW = (stage.lost / 1600) * 100;
+                  return (
+                    <div key={i}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 11 }}>
+                        <span style={{ color: '#64748B' }}>{stage.stage.split('→')[0].trim()}</span>
+                        <span style={{ color: sev.color, fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>{stage.lost.toLocaleString('en-IN')}</span>
+                      </div>
+                      <div style={{ background: '#1C2330', borderRadius: 3, height: 8 }}>
+                        <div style={{ width: `${Math.min(barW, 100)}%`, height: '100%', background: sev.color, borderRadius: 3 }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          </div>
+        </div>
+      );
+    }
+
+    function Budget() {
+      const { budgetAllocation, setBudgetAllocation, scenarioBudget, setScenarioBudget } = useDashboard();
+      const EFFICIENCY = { 'Meta Ads': { leadsPerCr: 153, bookingRate: 0.074, revenuePerBooking: 3.0 }, 'Google Ads': { leadsPerCr: 128, bookingRate: 0.090, revenuePerBooking: 3.0 }, 'Organic': { leadsPerCr: 0, bookingRate: 0.098, revenuePerBooking: 3.0 }, 'Referral': { leadsPerCr: 335, bookingRate: 0.117, revenuePerBooking: 3.0 }};
+      
+      const channels = Object.keys(budgetAllocation);
+      const allocations = channels.map(ch => ({ channel: ch, pct: budgetAllocation[ch], spend: parseFloat((scenarioBudget * budgetAllocation[ch] / 100).toFixed(2)) }));
+      
+      const projections = allocations.map(a => {
+        const eff = EFFICIENCY[a.channel];
+        const leads = a.channel === 'Organic' ? Math.round(a.spend * 40) : Math.round(a.spend * eff.leadsPerCr);
+        const bookings = Math.round(leads * eff.bookingRate);
+        const revenue = parseFloat((bookings * eff.revenuePerBooking).toFixed(1));
+        const roas = a.spend > 0 ? parseFloat((revenue / a.spend).toFixed(2)) : 0;
+        return { ...a, leads, bookings, revenue, roas };
+      });
+
+      const handleSlider = (ch, val) => {
+        const newVal = parseInt(val);
+        const remaining = 100 - newVal;
+        const others = channels.filter(c => c !== ch);
+        const currentOtherTotal = others.reduce((s, c) => s + budgetAllocation[c], 0);
+        const newAlloc = { ...budgetAllocation, [ch]: newVal };
+        if (currentOtherTotal > 0) {
+          others.forEach(c => { newAlloc[c] = Math.max(0, Math.round((budgetAllocation[c] / currentOtherTotal) * remaining)); });
+        }
+        const total = Object.values(newAlloc).reduce((s, v) => s + v, 0);
+        if (total !== 100) { const diff = 100 - total; const lastOther = others[others.length - 1]; newAlloc[lastOther] = Math.max(0, newAlloc[lastOther] + diff); }
+        setBudgetAllocation(newAlloc);
+      };
+
+      return (
+        <div className="slide-in" style={{ padding: 24 }}>
+          <SectionTitle sub="Simulate budget reallocation · Projected output per channel">Budget Optimization Simulator</SectionTitle>
+          <Card style={{ marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ color: '#475569', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', marginBottom: 6 }}>TOTAL MARKETING BUDGET (₹ CRORE)</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ color: '#94A3B8', fontSize: 16 }}>₹</span>
+                  <input type="number" className="input-field" value={scenarioBudget} onChange={e => setScenarioBudget(parseFloat(e.target.value) || 0)} style={{ width: 100, fontFamily: 'JetBrains Mono, monospace', fontSize: 18, fontWeight: 600, textAlign: 'center' }} min="1" max="200" step="0.5" />
+                  <span style={{ color: '#94A3B8', fontSize: 16 }}>Cr</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 24, marginLeft: 'auto' }}>
+                {[ { label: 'PROJECTED LEADS', value: projections.reduce((s,p)=>s+p.leads,0).toLocaleString('en-IN'), color: '#3B82F6' },
+                   { label: 'PROJECTED BOOKINGS', value: projections.reduce((s,p)=>s+p.bookings,0), color: '#22C55E' },
+                   { label: 'PROJECTED REVENUE', value: `₹${projections.reduce((s,p)=>s+p.revenue,0).toFixed(1)} Cr`, color: '#C9A84C' } ].map((kpi, i) => (
+                  <div key={i} style={{ textAlign: 'center' }}>
+                    <div style={{ color: '#475569', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', marginBottom: 4 }}>{kpi.label}</div>
+                    <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 18, fontWeight: 700, color: kpi.color }}>{kpi.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Card>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+            <Card>
+              <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 18 }}>Allocation Controls</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {channels.map(ch => (
+                  <div key={ch}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: CHANNEL_COLORS[ch] }} />
+                        <span style={{ color: '#E2E8F0', fontSize: 13, fontWeight: 500 }}>{ch}</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                        <span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#C9A84C', fontSize: 14, fontWeight: 700 }}>{budgetAllocation[ch]}%</span>
+                        <span style={{ color: '#475569', fontSize: 12 }}>₹{(scenarioBudget * budgetAllocation[ch] / 100).toFixed(2)} Cr</span>
+                      </div>
+                    </div>
+                    <input type="range" min={0} max={80} value={budgetAllocation[ch]} onChange={e => handleSlider(ch, e.target.value)} style={{ width: '100%', accentColor: CHANNEL_COLORS[ch], cursor: 'pointer' }} />
+                  </div>
+                ))}
+              </div>
+            </Card>
+            <Card>
+              <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Budget Distribution</div>
+              <ResponsiveContainer width="100%" height={180}>
+                <PieChart>
+                  <Pie data={allocations} cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3} dataKey="spend" nameKey="channel">
+                    {allocations.map((entry, i) => <Cell key={i} fill={CHANNEL_COLORS[entry.channel]} />)}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </Card>
+          </div>
+        </div>
+      );
+    }
+
+    function WhatIf() {
+      const { scenarioBudget, setScenarioBudget, scenarioConvRate, setScenarioConvRate, scenarioLeadVol, setScenarioLeadVol, scenarioKPIs } = useDashboard();
+      const BASE = { leads: 5112, bookings: 444, revenue: 133.2, roas: 4.18 };
+      const deltaLeads = scenarioKPIs.projectedLeads - BASE.leads;
+      const deltaBookings = scenarioKPIs.projectedBookings - BASE.bookings;
+      const deltaRevenue = (scenarioKPIs.projectedRevenue - BASE.revenue).toFixed(1);
+      
+      const SliderRow = ({ label, value, min, max, step, onChange, format, color = '#C9A84C' }) => (
+        <div style={{ marginBottom: 22 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ color: '#94A3B8', fontSize: 13, fontWeight: 500 }}>{label}</span>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 16, fontWeight: 700, color }}>{format === 'pct' ? `${value}%` : format === 'currency' ? `₹${value} Cr` : value.toLocaleString('en-IN')}</span>
+          </div>
+          <div style={{ position: 'relative' }}>
+            <input type="range" min={min} max={max} step={step} value={value} onChange={e => onChange(Number(e.target.value))} style={{ width: '100%', accentColor: color, cursor: 'pointer' }} />
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="slide-in" style={{ padding: 24 }}>
+          <SectionTitle sub="Adjust key variables and instantly see projected business impact">What-If Scenario Engine</SectionTitle>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+            <Card accent>
+              <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 20 }}>⚙️ Scenario Variables</div>
+              <SliderRow label="Marketing Budget" value={scenarioBudget} min={5} max={100} step={0.5} onChange={setScenarioBudget} format="currency" color="#3B82F6" />
+              <SliderRow label="Lead Conversion Rate" value={scenarioConvRate} min={1} max={25} step={0.1} onChange={setScenarioConvRate} format="pct" color="#22C55E" />
+              <SliderRow label="Lead Volume" value={scenarioLeadVol} min={500} max={15000} step={100} onChange={setScenarioLeadVol} format="number" color="#C9A84C" />
+            </Card>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>📊 Projected Impact</div>
+              {[
+                { label: 'PROJECTED LEADS', val: scenarioKPIs.projectedLeads.toLocaleString('en-IN'), delta: deltaLeads, color: '#3B82F6' },
+                { label: 'PROJECTED BOOKINGS', val: scenarioKPIs.projectedBookings, delta: deltaBookings, color: '#22C55E' },
+                { label: 'PROJECTED REVENUE', val: `₹${scenarioKPIs.projectedRevenue} Cr`, delta: deltaRevenue, color: '#C9A84C' }
+              ].map((kpi, i) => (
+                <div key={i} className="kpi-card" style={{ borderLeft: `3px solid ${kpi.color}`, padding: '14px 16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ color: '#475569', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', marginBottom: 4 }}>{kpi.label}</div>
+                      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 20, fontWeight: 700, color: kpi.color }}>{kpi.val}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ color: '#475569', fontSize: 10, marginBottom: 4 }}>vs. Baseline</div>
+                      <div style={{ color: Number(kpi.delta) >= 0 ? '#22C55E' : '#EF4444', fontFamily: 'JetBrains Mono, monospace', fontSize: 14, fontWeight: 700 }}>
+                        {Number(kpi.delta) >= 0 ? '+' : ''}{kpi.delta}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function UploadModule() {
+      const { setUploadedData } = useDashboard();
+      const [stage, setStage] = useState('idle');
+      const [file, setFile] = useState(null);
+      const [rawRows, setRawRows] = useState([]);
+      const [headers, setHeaders] = useState([]);
+      const [mapping, setMapping] = useState({});
+      const [dragOver, setDragOver] = useState(false);
+      const [error, setError] = useState('');
+      const fileRef = useRef();
+      const REQUIRED_FIELDS = ['date', 'leads', 'bookings', 'revenue', 'channel'];
+
+      const handleFile = (f) => {
+        if (!f) return; setFile(f); setStage('parsing'); setError('');
+        Papa.parse(f, { header: true, skipEmptyLines: true,
+          complete: (result) => {
+            if (!result.data?.length) { setError('File appears empty.'); setStage('error'); return; }
+            const hdrs = result.meta.fields || [];
+            setHeaders(hdrs); setRawRows(result.data);
+            const autoMapObj = {};
+            hdrs.forEach(h => {
+              const norm = h.toLowerCase().trim();
+              if (norm.includes('date') || norm.includes('month')) autoMapObj['date'] = h;
+              if (norm.includes('lead')) autoMapObj['leads'] = h;
+              if (norm.includes('book')) autoMapObj['bookings'] = h;
+              if (norm.includes('rev')) autoMapObj['revenue'] = h;
+              if (norm.includes('chan') || norm.includes('source')) autoMapObj['channel'] = h;
+            });
+            setMapping(autoMapObj); setStage('mapping');
+          },
+          error: (err) => { setError(err.message); setStage('error'); }
+        });
+      };
+
+      const applyData = () => {
+        const missing = REQUIRED_FIELDS.filter(f => !mapping[f]);
+        if (missing.length) { setError(`Missing required fields: ${missing.join(', ')}`); return; }
+        
+        const monthlyParsed = {};
+        rawRows.forEach(row => {
+          const m = row[mapping['date']] || 'Unknown';
+          const ch = row[mapping['channel']] || 'Mixed';
+          if (!monthlyParsed[m]) monthlyParsed[m] = { month: m, leads: 0, bookings: 0, revenue: 0, channel: ch };
+          monthlyParsed[m].leads += parseInt(row[mapping['leads']]) || 0;
+          monthlyParsed[m].bookings += parseInt(row[mapping['bookings']]) || 0;
+          monthlyParsed[m].revenue += parseFloat(row[mapping['revenue']]) || 0;
+        });
+
+        setUploadedData({ monthly: Object.values(monthlyParsed), channels: null, campaigns: null });
+        setStage('done');
+      };
+
+      return (
+        <div className="slide-in" style={{ padding: 24 }}>
+          <SectionTitle sub="Upload your CRM or marketing data · Auto column mapping">Data Upload</SectionTitle>
+          
+          {stage === 'idle' && (
+            <Card>
+              <div className={`upload-zone ${dragOver ? 'drag-over' : ''}`} style={{ padding: 48, textAlign: 'center', cursor: 'pointer', borderRadius: 8 }}
+                   onDragOver={e => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)}
+                   onDrop={e => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0]); }}
+                   onClick={() => fileRef.current.click()}>
+                <input ref={fileRef} type="file" accept=".csv" style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} />
+                <Icon name="Upload" size={40} color="#2E3A4E" style={{ margin: '0 auto 16px' }} />
+                <div style={{ color: '#94A3B8', fontSize: 15, fontWeight: 600, marginBottom: 8 }}>Drop your .CSV file here or click to browse</div>
+              </div>
+            </Card>
+          )}
+
+          {stage === 'mapping' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: '#22C55E11', border: '1px solid #22C55E33', borderRadius: 8 }}>
+                <Icon name="FileText" size={16} color="#22C55E" />
+                <span style={{ color: '#94A3B8', fontSize: 12 }}><strong style={{ color: '#F1F5F9' }}>{file?.name}</strong> · {rawRows.length} rows</span>
+              </div>
+              <Card>
+                <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 14 }}>Map Columns to Fields</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  {REQUIRED_FIELDS.map(f => (
+                    <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 120, fontSize: 12, color: '#E2E8F0', fontWeight: 600 }}>{f}<span style={{ color: '#EF4444' }}> *</span></div>
+                      <select className="input-field" style={{ flex: 1 }} value={mapping[f] || ''} onChange={e => setMapping(prev => ({ ...prev, [f]: e.target.value }))}>
+                        <option value="">— skip —</option>
+                        {headers.map(h => <option key={h} value={h}>{h}</option>)}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+              {error && <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#EF444411', border: '1px solid #EF444433', borderRadius: 8 }}><Icon name="AlertCircle" size={14} color="#EF4444" /><span style={{ color: '#EF4444', fontSize: 12 }}>{error}</span></div>}
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button className="btn-primary" onClick={applyData}>Apply Data & Refresh</button>
+                <button className="btn-ghost" onClick={() => setStage('idle')}>Cancel</button>
+              </div>
+            </div>
+          )}
+
+          {stage === 'done' && (
+            <Card style={{ textAlign: 'center', padding: 48 }}>
+              <Icon name="CheckCircle" size={48} color="#22C55E" style={{ margin: '0 auto 16px', display: 'block' }} />
+              <div style={{ color: '#F1F5F9', fontSize: 18, fontWeight: 600, marginBottom: 8 }}>Dashboard Updated Successfully</div>
+              <button className="btn-primary" onClick={() => { setUploadedData(null); setStage('idle'); }}>Revert to Default Data</button>
+            </Card>
+          )}
+        </div>
+      );
+    }
+
+    // --- APP ORCHESTRATOR ---
+    const MODULE_MAP = { overview: Overview, marketing: Marketing, funnel: Funnel, attribution: Attribution, revenue: Revenue, leakage: Leakage, budget: Budget, whatif: WhatIf, upload: UploadModule };
+
+    function DashboardContent() {
+      const { activeModule } = useDashboard();
+      const ActiveModule = MODULE_MAP[activeModule] || Overview;
+      return (
+        <div style={{ display: 'flex', minHeight: '100vh', background: '#0A0C10' }}>
+          <Sidebar />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+            <TopBar />
+            <main style={{ flex: 1, overflowY: 'auto' }}><ActiveModule key={activeModule} /></main>
+          </div>
+        </div>
+      );
+    }
+
+    function App() { return <DashboardProvider><DashboardContent /></DashboardProvider>; }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
