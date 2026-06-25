@@ -8,10 +8,8 @@
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js"></script>
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://unpkg.com/recharts@2.1.12/umd/Recharts.js"></script>
@@ -19,44 +17,33 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet" />
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0A0C10; color: #E2E8F0; margin: 0; }
-    
-    /* Input Styling */
     input[type="range"] { -webkit-appearance: none; appearance: none; background: #1C2330; height: 6px; border-radius: 4px; }
     input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #C9A84C; cursor: pointer; }
     .input-field { background: #0A0C10; border: 1px solid #1C2330; border-radius: 6px; padding: 6px 12px; color: #E2E8F0; font-size: 12px; outline: none; }
     .input-field:focus { border-color: #C9A84C; }
-    
-    /* Component Core CSS */
     .card { background: #11151D; border: 1px solid #1F2633; border-radius: 12px; }
     .card-accent { background: #11151D; border: 1px solid #C9A84C88; border-radius: 12px; }
     .section-title { color: #F1F5F9; font-size: 24px; font-weight: 700; margin: 0; }
-    
     .kpi-card { background: #11151D; border: 1px solid #1F2633; border-radius: 12px; padding: 16px; transition: all 0.2s ease; }
     .kpi-card:hover { border-color: #2E3A4E; transform: translateY(-2px); }
     .stat-number { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 700; color: #F1F5F9; }
-    
     .badge { display: inline-flex; items-center; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
     .badge-up { background: #22C55E22; color: #22C55E; }
     .badge-down { background: #EF444422; color: #EF4444; }
-    
     .nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #64748B; cursor: pointer; transition: all 0.2s ease; margin-bottom: 4px; }
     .nav-item:hover { background: #151A24; color: #E2E8F0; }
     .nav-item.active { background: #C9A84C; color: #0A0C10; }
-    
     .pulse-dot { width: 8px; height: 8px; background: #22C55E; border-radius: 50%; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); animation: pulse 2s infinite; }
     @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
-    
     .table-row:hover { background-color: #151A24; }
     .slide-in { animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-    
     .btn-primary { background-color: #C9A84C; color: #0A0C10; font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: 6px; transition: opacity 0.15s ease; cursor: pointer;}
     .btn-primary:hover { opacity: 0.9; }
     .btn-ghost { background: transparent; border: 1px solid #2E3A4E; color: #94A3B8; font-weight: 500; font-size: 13px; padding: 8px 16px; border-radius: 6px; transition: all 0.15s ease; cursor: pointer;}
     .btn-ghost:hover { background: #1C2330; color: #F1F5F9; }
     .upload-zone { border: 2px dashed #2E3A4E; transition: all 0.2s ease; }
     .upload-zone.drag-over, .upload-zone:hover { border-color: #C9A84C; background: #C9A84C05; }
-    
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #0A0C10; }
     ::-webkit-scrollbar-thumb { background: #1C2330; border-radius: 3px; }
@@ -74,7 +61,6 @@
       Radar, PolarGrid, PolarAngleAxis, Legend, RadialBarChart, RadialBar
     } = window.Recharts;
 
-    // --- ICON ENGINE ---
     const ICON_PATHS = {
       LayoutDashboard: "M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z",
       TrendingUp: "M23 6l-9.5 9.5-5-5L1 18 M17 6h6v6",
@@ -107,7 +93,6 @@
       );
     }
 
-    // --- MOCK DATA ---
     const CHANNELS = ['Meta Ads', 'Google Ads', 'Organic', 'Referral'];
     const CAMPAIGNS = ['Assotech Celeste Launch', 'Luxury Villa Campaign', 'Year-End Offer', 'Diwali Special', 'Q1 Brand Push', 'Google Search – Noida', 'Remarketing Wave', 'Organic SEO', 'Channel Partners', 'Word of Mouth'];
     const PROJECTS = ['Assotech Celeste', 'Assotech Park Xii', 'Assotech Business Cresterra', 'Assotech Windsor Park'];
@@ -214,8 +199,6 @@
 
     const allMonthlyData = [...monthlyData, ...generateForecast(monthlyData)];
 
-
-    // --- CONTEXT ENGINE ---
     const DashboardContext = createContext(null);
 
     function DashboardProvider({ children }) {
@@ -253,7 +236,7 @@
         return {
           totalLeads, totalBookings,
           totalRevenue: parseFloat(totalRevenue.toFixed(1)),
-          conversionRate: parseFloat(((totalBookings / (totalLeads || 1)) * 100).toFixed(2)),
+          conversionRate: totalLeads > 0 ? parseFloat(((totalBookings / totalLeads) * 100).toFixed(2)) : 0,
           totalAdSpend: parseFloat(totalSpend.toFixed(1)),
           roas: totalSpend > 0 ? parseFloat((totalRevenue / totalSpend).toFixed(2)) : 0,
           avgCAC: totalBookings > 0 ? Math.round((totalSpend * 1e7) / totalBookings) : 0,
@@ -264,7 +247,7 @@
 
       const scenarioKPIs = useMemo(() => {
         const projectedBookings = Math.round(scenarioLeadVol * scenarioConvRate / 100);
-        const avgRevenuePerBooking = 3.0; // crore
+        const avgRevenuePerBooking = 3.0;
         const projectedRevenue = parseFloat((projectedBookings * avgRevenuePerBooking).toFixed(1));
         const projectedROAS = scenarioBudget > 0 ? parseFloat((projectedRevenue / scenarioBudget).toFixed(2)) : 0;
         return { projectedLeads: scenarioLeadVol, projectedBookings, projectedRevenue, projectedROAS };
@@ -284,8 +267,6 @@
 
     const useDashboard = () => useContext(DashboardContext);
 
-
-    // --- UI COMPONENTS ---
     function Card({ children, className = '', style = {}, accent = false }) {
       return <div className={`${accent ? 'card-accent' : 'card'} ${className}`} style={{ padding: 20, ...style }}>{children}</div>;
     }
@@ -335,8 +316,6 @@
       );
     }
 
-
-    // --- LAYOUT ENGINE ---
     const NAV_ITEMS = [
       { id: 'overview', label: 'Executive Overview', icon: 'LayoutDashboard' },
       { id: 'marketing', label: 'Marketing Intelligence', icon: 'TrendingUp' },
@@ -433,10 +412,11 @@
       );
     }
 
-    // --- MODULES ---
     const CHANNEL_COLORS = { 'Meta Ads': '#3B82F6', 'Google Ads': '#22C55E', 'Organic': '#C9A84C', 'Referral': '#A855F7' };
+    
+    // Modern syntax scrubbed: Changed payload?.length to (payload && payload.length)
     const CustomTooltip = ({ active, payload, label }) => {
-      if (!active || !payload?.length) return null;
+      if (!active || !payload || !payload.length) return null;
       return (
         <div style={{ background: '#151A22', border: '1px solid #2E3A4E', borderRadius: 8, padding: '10px 14px' }}>
           <p style={{ color: '#94A3B8', fontSize: 11, marginBottom: 6 }}>{label}</p>
@@ -589,8 +569,8 @@
                           <span style={{ color: '#E2E8F0', fontWeight: 500 }}>{row.channel}</span>
                         </div>
                       </td>
-                      <td style={{ padding: '10px 12px', fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8' }}>{row.leads.toLocaleString('en-IN')}</td>
-                      <td style={{ padding: '10px 12px', fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8' }}>{row.siteVisits.toLocaleString('en-IN')}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8' }}>{row.leads ? row.leads.toLocaleString('en-IN') : '0'}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8' }}>{row.siteVisits ? row.siteVisits.toLocaleString('en-IN') : '0'}</td>
                       <td style={{ padding: '10px 12px', fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8' }}>{row.bookings}</td>
                       <td style={{ padding: '10px 12px', fontFamily: 'JetBrains Mono, monospace', color: '#C9A84C', fontWeight: 600 }}>₹{row.revenue} Cr</td>
                       <td style={{ padding: '10px 12px', fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8' }}>{row.adSpend > 0 ? `₹${row.adSpend} Cr` : '—'}</td>
@@ -652,7 +632,7 @@
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5, alignItems: 'center' }}>
                       <span style={{ color: '#94A3B8', fontSize: 12, fontWeight: 500 }}>{stage.stage}</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#F1F5F9', fontSize: 13, fontWeight: 600 }}>{stage.count.toLocaleString('en-IN')}</span>
+                        <span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#F1F5F9', fontSize: 13, fontWeight: 600 }}>{stage.count ? stage.count.toLocaleString('en-IN') : '0'}</span>
                         <span style={{ fontFamily: 'JetBrains Mono, monospace', color: stage.color, fontSize: 12, width: 42, textAlign: 'right' }}>{stage.pct}%</span>
                       </div>
                     </div>
@@ -686,7 +666,7 @@
             {data.funnel.map((stage, i) => (
               <div key={i} className="kpi-card text-center" style={{ borderTop: `3px solid ${stage.color}` }}>
                 <div style={{ color: '#475569', fontSize: 10, marginBottom: 6, fontWeight: 600 }}>{stage.stage.toUpperCase()}</div>
-                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 20, fontWeight: 700, color: '#F1F5F9', marginBottom: 4 }}>{stage.count.toLocaleString('en-IN')}</div>
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 20, fontWeight: 700, color: '#F1F5F9', marginBottom: 4 }}>{stage.count ? stage.count.toLocaleString('en-IN') : '0'}</div>
                 <div style={{ color: stage.color, fontSize: 12, fontWeight: 600 }}>{stage.pct}%</div>
                 {stage.drop > 0 && <div style={{ marginTop: 6, padding: '2px 6px', background: '#EF444411', borderRadius: 4, color: '#EF4444', fontSize: 10, fontWeight: 600 }}>-{stage.drop}% drop</div>}
               </div>
@@ -723,7 +703,7 @@
                 <div key={c.channel} className="kpi-card" style={{ borderTop: `2px solid ${isTop ? '#C9A84C' : CHANNEL_COLORS[c.channel]}`, position: 'relative' }}>
                   {isTop && <div style={{ position: 'absolute', top: 8, right: 8, background: '#C9A84C22', color: '#C9A84C', fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4 }}>TOP</div>}
                   <div style={{ color: CHANNEL_COLORS[c.channel], fontSize: 12, fontWeight: 600, marginBottom: 6 }}>{c.channel}</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}><span style={{ color: '#475569', fontSize: 11 }}>Leads</span><span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8', fontSize: 11 }}>{c.leads.toLocaleString('en-IN')}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}><span style={{ color: '#475569', fontSize: 11 }}>Leads</span><span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8', fontSize: 11 }}>{c.leads ? c.leads.toLocaleString('en-IN') : '0'}</span></div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}><span style={{ color: '#475569', fontSize: 11 }}>Bookings</span><span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8', fontSize: 11 }}>{c.bookings}</span></div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#475569', fontSize: 11 }}>Conv. Rate</span><span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#C9A84C', fontSize: 13, fontWeight: 700 }}>{convRate}%</span></div>
                 </div>
@@ -759,6 +739,26 @@
         </div>
       );
     }
+
+    // Modern syntax scrubbed: Changed finding forecast with ?. to safe access
+    const RevenueTooltip = ({ active, payload, label }) => {
+      if (!active || !payload || !payload.length) return null;
+      const foundData = allMonthlyData.find(d => d.month === label);
+      const isForecast = foundData && foundData.forecast;
+      
+      return (
+        <div style={{ background: '#151A22', border: `1px solid ${isForecast ? '#C9A84C66' : '#2E3A4E'}`, borderRadius: 8, padding: '10px 14px' }}>
+          <p style={{ color: isForecast ? '#C9A84C' : '#94A3B8', fontSize: 11, marginBottom: 6 }}>
+            {label} {isForecast ? '· Forecast' : '· Actual'}
+          </p>
+          {payload.map((p, i) => (
+            <p key={i} style={{ color: p.color, fontSize: 13, fontWeight: 600, margin: '2px 0' }}>
+              {p.name}: {p.name.includes('Revenue') ? `₹${p.value} Cr` : (p.value ? p.value.toLocaleString('en-IN') : '')}
+            </p>
+          ))}
+        </div>
+      );
+    };
 
     function Revenue() {
       const { data } = useDashboard();
@@ -806,7 +806,7 @@
                 <CartesianGrid stroke="#1C2330" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} tickFormatter={v => `₹${v}`} />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<RevenueTooltip />} />
                 <ReferenceLine x="Dec 24" stroke="#2E3A4E" strokeDasharray="4 4" label={{ value: 'Forecast →', fill: '#475569', fontSize: 10 }} />
                 <Area type="monotone" dataKey="actualRevenue" name="Actual Revenue" stroke="#C9A84C" fill="url(#revGrad)" strokeWidth={2.5} connectNulls={false} />
                 <Area type="monotone" dataKey="forecastRevenue" name="Forecast Revenue" stroke="#3B82F6" fill="url(#fcastGrad)" strokeWidth={2} strokeDasharray="6 3" dot={{ fill: '#3B82F6', r: 4 }} connectNulls={false} />
@@ -831,7 +831,8 @@
                       <tr key={i} className="table-row" style={{ borderBottom: '1px solid #0F1218', opacity: row.forecast ? 0.75 : 1 }}>
                         <td style={{ padding: '9px 14px', color: row.forecast ? '#3B82F6' : '#E2E8F0', fontWeight: 500 }}>{row.month}</td>
                         <td style={{ padding: '9px 14px', fontFamily: 'JetBrains Mono, monospace', color: '#C9A84C', fontWeight: 600 }}>₹{row.revenue} Cr</td>
-                        <td style={{ padding: '9px 14px', fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8' }}>{row.leads?.toLocaleString('en-IN')}</td>
+                        {/* Modern syntax scrubbed: row.leads?.toLocaleString becomes row.leads ? row.leads... */}
+                        <td style={{ padding: '9px 14px', fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8' }}>{row.leads ? row.leads.toLocaleString('en-IN') : '—'}</td>
                         <td style={{ padding: '9px 14px', fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8' }}>{row.bookings}</td>
                         <td style={{ padding: '9px 14px' }}>{delta !== null ? <span style={{ color: parseFloat(delta) >= 0 ? '#22C55E' : '#EF4444', fontSize: 11, fontWeight: 600 }}>{parseFloat(delta) >= 0 ? '▲' : '▼'} {Math.abs(delta)}%</span> : '—'}</td>
                         <td style={{ padding: '9px 14px' }}><span className="badge" style={{ background: row.forecast ? '#3B82F622' : '#22C55E22', color: row.forecast ? '#3B82F6' : '#22C55E' }}>{row.forecast ? 'Forecast' : 'Actual'}</span></td>
@@ -878,8 +879,8 @@
                       <div style={{ color: '#475569', fontSize: 11 }}>drop-off rate</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 16, color: '#EF4444', fontWeight: 600 }}>{stage.lost.toLocaleString('en-IN')}</div>
-                      <div style={{ color: '#475569', fontSize: 11 }}>lost of {stage.total.toLocaleString('en-IN')}</div>
+                      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 16, color: '#EF4444', fontWeight: 600 }}>{stage.lost ? stage.lost.toLocaleString('en-IN') : '0'}</div>
+                      <div style={{ color: '#475569', fontSize: 11 }}>lost of {stage.total ? stage.total.toLocaleString('en-IN') : '0'}</div>
                     </div>
                   </div>
                   <div style={{ background: '#1C2330', borderRadius: 4, height: 6, marginBottom: 8 }}>
@@ -917,7 +918,7 @@
                     <div key={i}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 11 }}>
                         <span style={{ color: '#64748B' }}>{stage.stage.split('→')[0].trim()}</span>
-                        <span style={{ color: sev.color, fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>{stage.lost.toLocaleString('en-IN')}</span>
+                        <span style={{ color: sev.color, fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>{stage.lost ? stage.lost.toLocaleString('en-IN') : '0'}</span>
                       </div>
                       <div style={{ background: '#1C2330', borderRadius: 3, height: 8 }}>
                         <div style={{ width: `${Math.min(barW, 100)}%`, height: '100%', background: sev.color, borderRadius: 3 }} />
@@ -1097,7 +1098,8 @@
         if (!f) return; setFile(f); setStage('parsing'); setError('');
         Papa.parse(f, { header: true, skipEmptyLines: true,
           complete: (result) => {
-            if (!result.data?.length) { setError('File appears empty.'); setStage('error'); return; }
+            // Modern syntax scrubbed: result.data?.length becomes result.data && result.data.length
+            if (!result.data || !result.data.length) { setError('File appears empty.'); setStage('error'); return; }
             const hdrs = result.meta.fields || [];
             setHeaders(hdrs); setRawRows(result.data);
             const autoMapObj = {};
@@ -1154,7 +1156,8 @@
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: '#22C55E11', border: '1px solid #22C55E33', borderRadius: 8 }}>
                 <Icon name="FileText" size={16} color="#22C55E" />
-                <span style={{ color: '#94A3B8', fontSize: 12 }}><strong style={{ color: '#F1F5F9' }}>{file?.name}</strong> · {rawRows.length} rows</span>
+                {/* Modern syntax scrubbed: file?.name becomes file ? file.name : '' */}
+                <span style={{ color: '#94A3B8', fontSize: 12 }}><strong style={{ color: '#F1F5F9' }}>{file ? file.name : ''}</strong> · {rawRows.length} rows</span>
               </div>
               <Card>
                 <div style={{ color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 14 }}>Map Columns to Fields</div>
