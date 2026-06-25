@@ -53,7 +53,7 @@
 <body>
   <div id="root"></div>
 
-  <script type="text/babel">
+  <script type="text/babel" data-type="module">
     const { useState, useEffect, useContext, createContext, useMemo, useRef } = React;
     const { 
       BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, AreaChart, Area, 
@@ -414,7 +414,6 @@
 
     const CHANNEL_COLORS = { 'Meta Ads': '#3B82F6', 'Google Ads': '#22C55E', 'Organic': '#C9A84C', 'Referral': '#A855F7' };
     
-    // Modern syntax scrubbed: Changed payload?.length to (payload && payload.length)
     const CustomTooltip = ({ active, payload, label }) => {
       if (!active || !payload || !payload.length) return null;
       return (
@@ -740,7 +739,6 @@
       );
     }
 
-    // Modern syntax scrubbed: Changed finding forecast with ?. to safe access
     const RevenueTooltip = ({ active, payload, label }) => {
       if (!active || !payload || !payload.length) return null;
       const foundData = allMonthlyData.find(d => d.month === label);
@@ -831,7 +829,6 @@
                       <tr key={i} className="table-row" style={{ borderBottom: '1px solid #0F1218', opacity: row.forecast ? 0.75 : 1 }}>
                         <td style={{ padding: '9px 14px', color: row.forecast ? '#3B82F6' : '#E2E8F0', fontWeight: 500 }}>{row.month}</td>
                         <td style={{ padding: '9px 14px', fontFamily: 'JetBrains Mono, monospace', color: '#C9A84C', fontWeight: 600 }}>₹{row.revenue} Cr</td>
-                        {/* Modern syntax scrubbed: row.leads?.toLocaleString becomes row.leads ? row.leads... */}
                         <td style={{ padding: '9px 14px', fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8' }}>{row.leads ? row.leads.toLocaleString('en-IN') : '—'}</td>
                         <td style={{ padding: '9px 14px', fontFamily: 'JetBrains Mono, monospace', color: '#94A3B8' }}>{row.bookings}</td>
                         <td style={{ padding: '9px 14px' }}>{delta !== null ? <span style={{ color: parseFloat(delta) >= 0 ? '#22C55E' : '#EF4444', fontSize: 11, fontWeight: 600 }}>{parseFloat(delta) >= 0 ? '▲' : '▼'} {Math.abs(delta)}%</span> : '—'}</td>
@@ -1098,7 +1095,6 @@
         if (!f) return; setFile(f); setStage('parsing'); setError('');
         Papa.parse(f, { header: true, skipEmptyLines: true,
           complete: (result) => {
-            // Modern syntax scrubbed: result.data?.length becomes result.data && result.data.length
             if (!result.data || !result.data.length) { setError('File appears empty.'); setStage('error'); return; }
             const hdrs = result.meta.fields || [];
             setHeaders(hdrs); setRawRows(result.data);
@@ -1156,7 +1152,6 @@
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: '#22C55E11', border: '1px solid #22C55E33', borderRadius: 8 }}>
                 <Icon name="FileText" size={16} color="#22C55E" />
-                {/* Modern syntax scrubbed: file?.name becomes file ? file.name : '' */}
                 <span style={{ color: '#94A3B8', fontSize: 12 }}><strong style={{ color: '#F1F5F9' }}>{file ? file.name : ''}</strong> · {rawRows.length} rows</span>
               </div>
               <Card>
@@ -1192,7 +1187,6 @@
       );
     }
 
-    // --- APP ORCHESTRATOR ---
     const MODULE_MAP = { overview: Overview, marketing: Marketing, funnel: Funnel, attribution: Attribution, revenue: Revenue, leakage: Leakage, budget: Budget, whatif: WhatIf, upload: UploadModule };
 
     function DashboardContent() {
